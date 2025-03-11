@@ -50,6 +50,12 @@ class FormAddPetState extends State<FormAddPet> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    getPetType();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Form(
