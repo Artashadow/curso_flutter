@@ -52,16 +52,12 @@ class PetListState extends State<PetList> {
 
   Widget buildItemsForListView(BuildContext context, int index) {
     return Card(
-      margin: const EdgeInsets.all(10.0),
+      margin: const EdgeInsets.all(5.0),
       child: Column(
         children: [
+          Container(child: imageWidgetWithSize(pets[index].image, 150, 150)),
           Container(
-            padding: const EdgeInsets.all(10.0),
-            child: imageWidget(pets[index].image),
-          ),
-          Container(
-            padding: const EdgeInsets.all(10.0),
-            child: Text(pets[index].name, style: const TextStyle(fontSize: 18)),
+            child: Text(pets[index].name, style: const TextStyle(fontSize: 23)),
           ),
           iconButton('Ver amigo', () => {goToDetail(context, pets[index].id)}),
         ],

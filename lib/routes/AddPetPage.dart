@@ -1,11 +1,14 @@
 import 'dart:io';
-
+import 'package:demo/main.dart';
+import 'package:demo/models/Pet.dart';
 import 'package:demo/models/StatusPet.dart';
 import 'package:demo/models/TypePet.dart';
+import 'package:demo/utils/ImageUtils.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 
 class AddPetPage extends StatelessWidget {
   const AddPetPage({super.key});
@@ -20,7 +23,7 @@ class AddPetPage extends StatelessWidget {
 }
 
 class FormAddPet extends StatefulWidget {
-  const FormAddPet({super.key});
+  const FormAddPet({Key? key}) : super(key: key);
 
   @override
   createState() => FormAddPetState();
@@ -30,10 +33,16 @@ class FormAddPetState extends State<FormAddPet> {
   List<TypePet> types = [];
   TypePet selectedType = TypePet(id: -1, name: 'Por favor escoge');
   StatusPet selectedStatus = StatusPet(id: 1, name: 'Abandonado');
-
   bool isRescued = false;
   File? imageFile;
   GlobalKey<FormState> formKey = GlobalKey();
+  bool isValidated = false;
+  late ProgressDialog progressDialog;
+
+  // Controladores para los input de texto
+  TextEditingController nameController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
+  TextEditingController ageController = TextEditingController();
 
   Future<void> getPetType() async {
     const String endpointTypePets =
@@ -60,11 +69,13 @@ class FormAddPetState extends State<FormAddPet> {
     return SingleChildScrollView(
       child: Form(
         key: formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Container(
           padding: const EdgeInsets.all(10.0),
           child: Column(
             children: [
               TextFormField(
+                controller: nameController,
                 decoration: const InputDecoration(
                   icon: Icon(Icons.pets),
                   labelText: 'Nombre:',
@@ -76,6 +87,7 @@ class FormAddPetState extends State<FormAddPet> {
                         validateText(value!, 'Coloca un nombre para tu amigo'),
               ),
               TextFormField(
+                controller: descriptionController,
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
                 decoration: const InputDecoration(
@@ -88,6 +100,7 @@ class FormAddPetState extends State<FormAddPet> {
                 maxLength: 312,
               ),
               TextFormField(
+                controller: ageController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   icon: Icon(Icons.date_range),
@@ -128,6 +141,10 @@ class FormAddPetState extends State<FormAddPet> {
                 onChanged: (value) {
                   setState(() {
                     isRescued = value;
+                    selectedStatus =
+                        isRescued
+                            ? StatusPet(id: 2, name: 'Rescatado')
+                            : StatusPet(id: 1, name: 'Abandonado');
                   });
                 },
               ),
@@ -166,8 +183,8 @@ class FormAddPetState extends State<FormAddPet> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
             child: const Text(
-              'Escoger Imágen',
               style: TextStyle(color: Colors.white),
+              'Escoger Imágen',
             ),
             onPressed: () => pickImage(ImageSource.gallery),
           ),
@@ -182,9 +199,10 @@ class FormAddPetState extends State<FormAddPet> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.primary,
         ),
+        onPressed: () => {onSendPressed()},
         child: const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Padding(
               padding: EdgeInsets.all(7.0),
@@ -193,13 +211,36 @@ class FormAddPetState extends State<FormAddPet> {
             Text('Enviar', style: TextStyle(color: Colors.white)),
           ],
         ),
-        onPressed: () => {onSendPressed()},
       ),
     );
   }
 
   void validateForm() {
-    formKey.currentState?.validate();
+    progressDialog = ProgressDialog(
+      context,
+      type: ProgressDialogType.normal,
+      isDismissible: true,
+    );
+    if (formKey.currentState?.validate() == true) {
+      progressDialog.show();
+      Pet newPet = Pet(
+        id: 0,
+        name: nameController.text,
+        description: descriptionController.text,
+        age: (ageController.text != '') ? int.parse(ageController.text) : 0,
+        image: getImage(imageFile),
+        type: selectedType,
+        status: selectedStatus,
+      );
+      createPost(
+        'https://mobile-courses-api-5a809b95fc81.herokuapp.com/api/pets',
+        jsonEncode(newPet.toJson()),
+      );
+    } else {
+      setState(() {
+        isValidated = false;
+      });
+    }
   }
 
   String? validateText(String value, String message) {
@@ -216,5 +257,27 @@ class FormAddPetState extends State<FormAddPet> {
     } else {
       return null;
     }
+  }
+
+  void createPost(String url, String body) async {
+    return http
+        .post(
+          Uri.parse(url),
+          body: body,
+          headers: <String, String>{'Content-Type': 'application/json'},
+        )
+        .then((response) {
+          final int statusCode = response.statusCode;
+          progressDialog.hide();
+          if (statusCode != 200) {
+            throw Exception(
+              'Error tratando de mandar información: ${response.body}',
+            );
+          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MyApp()),
+          );
+        });
   }
 }

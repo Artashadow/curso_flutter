@@ -176,14 +176,14 @@ class AdminPageState extends State<AdminPage> {
 
   void deletePet(BuildContext context, int position, int id) async {
     final String endpointDeletePet =
-        'https://android-course-api.herokuapp.com/api/pets/$id';
+        'https://mobile-courses-api-5a809b95fc81.herokuapp.com/api/pets/$id';
     final response = await http.delete(Uri.parse(endpointDeletePet));
     if (response.statusCode == 200) {
       setState(() {
         pets.removeAt(position);
       });
     } else {
-      throw Exception('Fallo al cargar información del servidor');
+      throw Exception('Fallo al cargar información del servidor: ${response.body}');
     }
     Navigator.of(context).pop();
   }

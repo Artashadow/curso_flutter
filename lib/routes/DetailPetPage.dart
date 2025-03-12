@@ -37,8 +37,13 @@ class DetailPetPage extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10.0),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        imageWidget(snapshot.data?.image ?? '')
+                        imageWidgetWithSize(
+                          snapshot.data?.image ?? '',
+                          250,
+                          250,
+                        ),
                       ],
                     ),
                   ),

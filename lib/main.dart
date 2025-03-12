@@ -3,7 +3,7 @@ import 'package:demo/routes/HomePage.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp( MyApp());
 }
 
 final ThemeData themeData = new ThemeData(
@@ -16,7 +16,8 @@ final ThemeData themeData = new ThemeData(
 );
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+  final HomePage homePage = HomePage();
 
   // This widget is the root of your application.
   @override
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
         builder:
             (context) => Scaffold(
               appBar: AppBar(title: Text('Salva a un amigo')),
-              body: HomePage(),
+              body: homePage,
               drawer: Drawer(
                 child: ListView(
                   children: [
@@ -54,8 +55,8 @@ class MyApp extends StatelessWidget {
   void goToAdmin(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AdminPage()),
-    );
+      MaterialPageRoute(builder: (context) => const AdminPage()),
+    ).then((value) => homePage.petList.petListState.refresh());
   }
 
   void goToHome(BuildContext context) {
